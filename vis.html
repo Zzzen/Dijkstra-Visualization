@@ -1,0 +1,149 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="vis.min.js"></script>
+</head>
+
+<body>
+    <div width="600px" height="600px" id="cao">
+    </div>
+    <script type="text/javascript">
+        var LEGNTH = 15;
+        var MAX_NUM = 9999;
+
+        function createVertext(id) {
+            this.id = id;
+            this.label = id;
+            this.distance = MAX_NUM;
+            this.unvisited = true;
+        }
+
+        function getRandomId() {
+            return Math.floor(Math.random() * LEGNTH) + 0;
+        }
+
+        function getRandomLength() {
+            return Math.floor(Math.random() * (10 - 1)) + 5;
+        }
+
+        var vertexes = [];
+        for (var i = 0; i < LEGNTH; i++) {
+            vertexes[i] = new createVertext(i);
+        }
+
+        var edges = [];
+        for (var i = 0; i <= 30; i++) {
+            var from = getRandomId(),
+                to = getRandomId(),
+                length = getRandomLength();
+            to = from != to ? to : from;
+            var edge = {
+                from: from,
+                to: to,
+                length: length,
+                arrows: 'to',
+                label: length
+            }
+            edges[i] = edge;
+        }
+
+        // return edges starting from `from` if `to` is not specified.
+        // otherwise, return the shortest edge between `from` and `to`
+
+        function getEdges(from, to) {
+            var arr = [];
+            for (var i = 0; i < edges.length; i++) {
+                var edge = edges[i];
+                if (edge.from === from) {
+                    arr.push(edge);
+                }
+            }
+            return arr;
+        }
+
+
+        var start = 1;
+        var target = 5;
+
+        //step1:
+        vertexes[start].distance = 0;
+
+        //step2:
+        var current_vertex = vertexes[start];
+        var unvisited = vertexes.filter(function(v) {
+            return v.id != start;
+        });
+
+
+        while (current_vertex)
+        {
+            //step3:
+            var edgesFromCurrent = getEdges(current_vertex.id);
+            // console.log(edgesFromCurrent);
+            var unvisitedNeighbors = edgesFromCurrent.map(function(edge) {
+                return vertexes[edge.to];
+            }).filter(function(vertex) {
+                return vertex.unvisited;
+            });
+            //update *tentative* distance of `unvisitedNeighbors`
+            for (var i = 0; i < unvisitedNeighbors.length; i++) {
+                var vertex = unvisitedNeighbors[i];
+                var newDistance = current_vertex.distance + getEdges(current_vertex.id, vertex.id).length;
+                if (vertex.distance > newDistance) {
+                    vertex.distance = newDistance;
+                    // getEdges(current_vertex.id, vertex.id).width = 5;
+                    // console.log("wocao"+getEdges(current_vertex.id, vertex.id).width);
+                    vertex.prev = current_vertex;
+                }
+            }
+
+            //step4:
+            current_vertex.unvisited = false;
+            unvisited = unvisited.filter(function(v) {
+                return v !== current_vertex;
+            });
+            // console.log(unvisited);
+
+            //step5:
+            if(vertexes[target].unvisited===false){
+                alert("Yeah");
+                break;
+            }
+            var nearest = new Object();
+            nearest.distance = MAX_NUM;
+            for(var i=0; i<unvisited.length; i++){
+                var vertex = unvisited[i];
+                if(vertex.distance < nearest.distance){
+                    nearest = vertex;
+                }
+            };
+            console.log(nearest);
+            if(nearest.distance === MAX_NUM){ alert("No Way!");break;};
+
+            //step6:
+            // console.log(nearest);
+            current_vertex = nearest;
+        }
+
+        var prevVertex = current_vertex.prev;
+        while (prevVertex) {
+            console.log(prevVertex);
+            getEdges(prevVertex.id,current_vertex.id).width = 5;
+            current_vertex = prevVertex;
+            prevVertex = current_vertex.prev;
+        }
+
+
+        // create a network
+        var container = document.getElementById('cao');
+        var data = {
+            nodes: vertexes,
+            edges: edges.filter(function(edge){  //remove trival edges
+                return edge.from!==edge.to;
+            })
+        };
+        var options = {};
+        var network = new vis.Network(container, data, options);
+    </script>
+</body>
