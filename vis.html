@@ -6,7 +6,7 @@
 </head>
 
 <body>
-    <div width="600px" height="600px" id="cao">
+    <div id="cao">
     </div>
     <script type="text/javascript">
         var LEGNTH = 15;
@@ -37,7 +37,6 @@
             var from = getRandomId(),
                 to = getRandomId(),
                 length = getRandomLength();
-            to = from != to ? to : from;
             var edge = {
                 from: from,
                 to: to,
@@ -53,13 +52,20 @@
 
         function getEdges(from, to) {
             var arr = [];
-            for (var i = 0; i < edges.length; i++) {
-                var edge = edges[i];
+            edges.forEach(function(edge) {
                 if (edge.from === from) {
-                    arr.push(edge);
+                    if (!to) {
+                        arr.push(edge);
+                    } else if (edge.to === to) {
+                        arr.push(edge);
+                    }
                 }
-            }
-            return arr;
+            });
+
+            if (!to) return arr;
+            else return arr.sort(function(ea, eb) {
+                return ea - eb;
+            })[0];
         }
 
 
@@ -70,68 +76,62 @@
         vertexes[start].distance = 0;
 
         //step2:
-        var current_vertex = vertexes[start];
+        var currentVertex = vertexes[start];
         var unvisited = vertexes.filter(function(v) {
             return v.id != start;
         });
 
 
-        while (current_vertex)
-        {
+        while (currentVertex) {
             //step3:
-            var edgesFromCurrent = getEdges(current_vertex.id);
+            var edgesFromCurrent = getEdges(currentVertex.id);
             // console.log(edgesFromCurrent);
             var unvisitedNeighbors = edgesFromCurrent.map(function(edge) {
                 return vertexes[edge.to];
             }).filter(function(vertex) {
                 return vertex.unvisited;
             });
-            //update *tentative* distance of `unvisitedNeighbors`
-            for (var i = 0; i < unvisitedNeighbors.length; i++) {
-                var vertex = unvisitedNeighbors[i];
-                var newDistance = current_vertex.distance + getEdges(current_vertex.id, vertex.id).length;
+            //update the *tentative* distance of `unvisitedNeighbors`
+            unvisitedNeighbors.forEach(function(vertex) {
+                var newDistance = currentVertex.distance + getEdges(currentVertex.id, vertex.id).length;
                 if (vertex.distance > newDistance) {
                     vertex.distance = newDistance;
-                    // getEdges(current_vertex.id, vertex.id).width = 5;
-                    // console.log("wocao"+getEdges(current_vertex.id, vertex.id).width);
-                    vertex.prev = current_vertex;
+                    vertex.prev = currentVertex;
                 }
-            }
+            });
 
             //step4:
-            current_vertex.unvisited = false;
+            currentVertex.unvisited = false;
             unvisited = unvisited.filter(function(v) {
-                return v !== current_vertex;
+                return v !== currentVertex;
             });
-            // console.log(unvisited);
 
             //step5:
-            if(vertexes[target].unvisited===false){
-                alert("Yeah");
+            if (vertexes[target].unvisited === false) {
+                console.log("OK");
+                GET = true;
                 break;
             }
-            var nearest = new Object();
-            nearest.distance = MAX_NUM;
-            for(var i=0; i<unvisited.length; i++){
-                var vertex = unvisited[i];
-                if(vertex.distance < nearest.distance){
-                    nearest = vertex;
-                }
-            };
+            var nearest = unvisited.sort(function(va, vb) {
+                return va.distance - vb.distance;
+            })[0];
             console.log(nearest);
-            if(nearest.distance === MAX_NUM){ alert("No Way!");break;};
+            if (nearest.distance === MAX_NUM) {
+                GET = false;
+                break;
+            };
 
             //step6:
             // console.log(nearest);
-            current_vertex = nearest;
+            currentVertex = nearest;
         }
 
-        var prevVertex = current_vertex.prev;
-        while (prevVertex) {
+        var prevVertex = currentVertex.prev;
+        while (GET && prevVertex) {
             console.log(prevVertex);
-            getEdges(prevVertex.id,current_vertex.id).width = 5;
-            current_vertex = prevVertex;
-            prevVertex = current_vertex.prev;
+            getEdges(prevVertex.id, currentVertex.id).width = 5;
+            currentVertex = prevVertex;
+            prevVertex = currentVertex.prev;
         }
 
 
@@ -139,8 +139,8 @@
         var container = document.getElementById('cao');
         var data = {
             nodes: vertexes,
-            edges: edges.filter(function(edge){  //remove trival edges
-                return edge.from!==edge.to;
+            edges: edges.filter(function(edge) { //remove trival edges
+                return edge.from !== edge.to;
             })
         };
         var options = {};
